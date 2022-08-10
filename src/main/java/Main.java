@@ -12,11 +12,12 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
+
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -47,7 +48,7 @@ public class Main {
 
     }
 
-    public static void writeString( String fileNameJson, String json) {
+    public static void writeString(String fileNameJson, String json) {
         try (FileWriter file = new FileWriter(fileNameJson)) {
             file.write(json);
             file.flush();
@@ -58,39 +59,33 @@ public class Main {
     }
 
     private static List<Employee> parseXML(String str) {
-        List<Employee> staff2 = null;
+        List<Employee> staff2 = new ArrayList<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse(new File(str));
+            Document document = builder.parse(str);
             Node root = document.getDocumentElement();
-            System.out.println("Корневой элемент: " + root.getNodeName());
-            Employee employee;
-            // staff2.add(root.getNodeName());
+
+            NodeList nodeList = root.getChildNodes();
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Node node_ = nodeList.item(i);
+                if (Node.ELEMENT_NODE == node_.getNodeType()) {
+
+                    Element element = (Element) node_;
+                    NamedNodeMap map = element.getAttributes();
+
+                    for (int j = 0; j < map.getLength(); j++) {
+                        Employee employee = (Employee) map.item(j).getAttributes();
+                        staff2.add(employee);
+                    }
+                }
+            }
+
 
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
-
         return staff2;
-    }
-
-    private static void read(Node root) {
-        NodeList nodeList = root.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node_ = nodeList.item(i);
-            if (Node.ELEMENT_NODE == node_.getNodeType()) {
-                System.out.println("Текущий узел: " + node_.getNodeName());
-                Element element = (Element) node_;
-                NamedNodeMap map = element.getAttributes();
-                for (int j = 0; j < map.getLength(); j++) {
-                    String attrName = map.item(j).getNodeName();
-                    String attrValue = map.item(j).getNodeValue();
-                    System.out.println("Атрибут: " + attrName + "; значение: " + attrValue);
-                }
-                read(node_);
-            }
-        }
     }
 
     public static void main(String[] args) {
@@ -101,9 +96,10 @@ public class Main {
         String json = listToJson(list);
         writeString( "data.json", json);
 
-        //List<Employee> list2 = parseXML("data.xml");
+        List<Employee> list2 = parseXML("data.xml");
+        String json2 = listToJson(list2);
+        writeString("data.json2", json2);
 
     }
-
 
 }
